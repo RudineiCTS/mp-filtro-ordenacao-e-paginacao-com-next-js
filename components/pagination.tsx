@@ -1,3 +1,4 @@
+"use client";
 import {
   Pagination as PaginationComponent,
   PaginationContent,
@@ -6,13 +7,65 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from '@/components/ui/pagination';
+} from "@/components/ui/pagination";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-export default function Pagination() {
+interface PaginationProps {
+  pages: {
+    url: string;
+    label: string;
+    active: boolean;
+    id:number
+  }[];
+}
+export default function Pagination({ pages }: PaginationProps) {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const {replace} = useRouter();
+  
+  function handleClickPage(pageNumber: number) {
+    const params = new URLSearchParams(searchParams);
+    if(pageNumber > 1){
+      params.set('page', String(pageNumber));
+    }else{
+      params.delete('page');
+    }
+    replace(`${pathname}?${params.toString()}`,{scroll: false})
+  }
   return (
     <PaginationComponent>
       <PaginationContent>
-        <PaginationItem>
+      <PaginationItem onClick={()=>handleClickPage(Number(searchParams.get('page'))- 1)}>
+          <PaginationPrevious />
+        </PaginationItem>
+        {pages.map((p) => {
+          if (p.label.includes('Anterior') || p.label.includes("Próximo")) {
+            return null;
+          }
+          if(p.label === '...'){
+            return (
+            <PaginationItem className="hidden md:inline-flex" key={p.id}>
+              <PaginationEllipsis />
+            </PaginationItem>
+            )
+          }
+
+          return (
+            <PaginationItem key={p.id} className="cursor-pointer">
+              <PaginationLink
+                isActive={p.active}
+                dangerouslySetInnerHTML={{ __html: p.label }}
+                onClick={() => handleClickPage(Number(p.label))}
+              ></PaginationLink>
+            </PaginationItem>
+          );
+        })}
+
+        <PaginationItem onClick={()=>handleClickPage(Number(searchParams.get('page'))+ 1)}>
+          <PaginationNext />
+        </PaginationItem>
+
+        {/* <PaginationItem>
           <PaginationPrevious />
         </PaginationItem>
         <PaginationItem className="hidden md:inline-flex">
@@ -38,7 +91,7 @@ export default function Pagination() {
         </PaginationItem>
         <PaginationItem>
           <PaginationNext />
-        </PaginationItem>
+        </PaginationItem> */}
       </PaginationContent>
     </PaginationComponent>
   );
